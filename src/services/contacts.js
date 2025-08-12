@@ -7,8 +7,15 @@ async function getAllContacts() {
 async function getContactById(contactId) {
   return await ContactCollection.findById(contactId);
 }
-
+async function createContact(contactData) {
+  return await ContactCollection.create(contactData);
+}
+async function updateContact(contactId, updateData) {
+  return await ContactCollection.findByIdAndUpdate(contactId, updateData, { new: true });
+}
 export default {
   getAllContacts,
   getContactById,
+  createContact,
+  updateContact,
 };

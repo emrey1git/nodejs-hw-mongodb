@@ -44,8 +44,8 @@ async function createContact(req,res,next){
 
 async function updateContact (req, res, next) {
    try {
-    const personId = req.params.id;
-   const contact = await contactsService.updateContact(personId, req.body);
+    const { contactId } = req.params;
+   const contact = await contactsService.updateContact(contactId, req.body);
 
     if(!contact){
       throw createError(404, "Contact not found")

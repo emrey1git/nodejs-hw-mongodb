@@ -13,9 +13,13 @@ async function createContact(contactData) {
 async function updateContact(contactId, updateData) {
   return await ContactCollection.findByIdAndUpdate(contactId, updateData, { new: true });
 }
+async function deleteContact(contactId) {
+  return await ContactCollection.findByIdAndDelete(contactId)
+}
 export default {
   getAllContacts,
   getContactById,
   createContact,
   updateContact,
+  deleteContact,
 };

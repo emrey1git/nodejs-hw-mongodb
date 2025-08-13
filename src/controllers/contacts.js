@@ -59,6 +59,7 @@ async function updateContact (req, res, next) {
   }
 }
 async function deleteContact(req, res, next) {
+  
   try {
     const { contactId } = req.params;
     const deletedContact = await contactsService.deleteContact(contactId);

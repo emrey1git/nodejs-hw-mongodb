@@ -65,7 +65,11 @@ async function getContactById(req, res, next) {
 // POST /contacts
 async function createContact(req, res, next) {
   try {
-    const newContact = await contactsService.createContact(req.body);
+  
+    const newContact = await contactsService.createContact({
+      ...req.body,
+      userId: req.user._id, // Burada ekledik
+    });
 
     res.status(201).json({
       message: "Successfully created a contact!",
@@ -75,6 +79,7 @@ async function createContact(req, res, next) {
     next(error);
   }
 }
+
 
 // PATCH /contacts/:contactId
 async function updateContact(req, res, next) {

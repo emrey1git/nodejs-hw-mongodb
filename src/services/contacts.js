@@ -1,43 +1,45 @@
 import ContactCollection from '../db/models/Contact.js';
 
-// Tüm kontakları sayfalama ile getir
-async function getAllContacts({ skip = 0, limit = 10, sortBy = '_id', sortOrder = 'asc', filter = {} } = {}) {
-  return ContactCollection.find(filter)
-                          .sort({ [sortBy]: sortOrder })
-                          .skip(skip)
-                          .limit(limit);
+
+async function getAllContacts({ userId, skip = 0, limit = 10, sortBy = '_id', sortOrder = 'asc', filter = {} } = {}) {
+  return ContactCollection.find({ ...filter, userId })
+    .sort({ [sortBy]: sortOrder })
+    .skip(skip)
+    .limit(limit);
 }
 
 
-
-
-// Toplam kontak sayısını döndür
-async function countContacts(filter = {}) {
-  return ContactCollection.countDocuments(filter);
-}
-// ID ile kontak getir
-async function getContactById(contactId) {
-  return ContactCollection.findById(contactId);
+async function countContacts({ userId, filter = {} } = {}) {
+  return ContactCollection.countDocuments({ ...filter, userId });
 }
 
-// Yeni kontak oluştur
+
+async function getContactById(contactId, userId) {
+  return ContactCollection.findOne({ _id: contactId, userId });
+}
+
+
 async function createContact(contactData) {
   return ContactCollection.create(contactData);
 }
 
-// Mevcut kontak güncelle
-async function updateContact(contactId, updateData) {
-  return ContactCollection.findByIdAndUpdate(contactId, updateData, { new: true });
+
+async function updateContact(contactId, userId, updateData) {
+  return ContactCollection.findOneAndUpdate(
+    { _id: contactId, userId },
+    updateData,
+    { new: true }
+  );
 }
 
-// Kontak sil
-async function deleteContact(contactId) {
-  return ContactCollection.findByIdAndDelete(contactId);
+
+async function deleteContact(contactId, userId) {
+  return ContactCollection.findOneAndDelete({ _id: contactId, userId });
 }
 
 export default {
   getAllContacts,
-  countContacts, // artık ekli
+  countContacts,
   getContactById,
   createContact,
   updateContact,

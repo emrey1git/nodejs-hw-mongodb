@@ -1,5 +1,4 @@
-import Joi, { required } from 'joi';
-import mongoose, { mongoose } from 'mongoose';
+import mongoose from 'mongoose';
 
 const sessionSchema = new mongoose.Schema(
   {
@@ -11,7 +10,7 @@ const sessionSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    refreshtoken: {
+    refreshToken: {    // burayı düzelttik
       type: String,
       required: true,
     },

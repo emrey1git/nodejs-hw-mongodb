@@ -2,6 +2,7 @@ import {
   registerUser,
   loginUser,
   logoutUser,
+  refreshSession,
 } from '../services/authServices.js';
 
 export const register = async (req, res, next) => {
@@ -39,7 +40,7 @@ export const login = async (req, res, next) => {
     next(error);
   }
 };
-import { refreshSession } from '../services/auth.js';
+
 
 export const refresh = async (req, res, next) => {
   try {
@@ -67,7 +68,8 @@ export const refresh = async (req, res, next) => {
 
 export const logout = async (req, res, next) => {
   try {
-    const { refreshToken } = req.cookies;
+    const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
+    if (!refreshToken) throw new Error('No refresh token provided');
 
     await logoutUser(refreshToken);
 
@@ -80,3 +82,4 @@ export const logout = async (req, res, next) => {
     next(error);
   }
 };
+

@@ -3,11 +3,12 @@ import contactsService from '../services/contacts.js';
 import { parsePaginationParams } from '../utils/parsePaginationParams.js';
 import { parseSortParams } from '../utils/parseSortParams.js';
 import { parseFilterParams } from '../utils/parseFilterParams.js';
+import cloudinary from '../utils/cloudinary.js';
+
 // GET /contacts — sayfalama ile
 async function getContacts(req, res, next) {
-
   try {
-      const { page, perPage } = parsePaginationParams(req.query);
+    const { page, perPage } = parsePaginationParams(req.query);
     const { sortBy, sortOrder } = parseSortParams(req.query);
     const filter = parseFilterParams(req.query);
 
@@ -19,7 +20,6 @@ async function getContacts(req, res, next) {
       sortOrder,
       filter
     });
-
 
     const totalPages = Math.ceil(totalItems / perPage);
 
@@ -42,7 +42,7 @@ async function getContacts(req, res, next) {
 }
 
 // GET /contacts/:contactId
-async function getContactById(req, res, next) { 
+async function getContactById(req, res, next) {
   try {
     const { contactId } = req.params;
 
@@ -65,10 +65,24 @@ async function getContactById(req, res, next) {
 // POST /contacts
 async function createContact(req, res, next) {
   try {
-  
+    const { file } = req;
+
+    // Fotoğraf yükleme varsa Cloudinary'e gönder
+    if (file) {
+      const result = await cloudinary.uploader.upload_stream(
+        { resource_type: 'image', folder: 'contacts' },
+        (error, result) => {
+          if (error) throw error;
+          req.body.photo = result.secure_url;
+        }
+      );
+      const stream = result;
+      stream.end(file.buffer);
+    }
+
     const newContact = await contactsService.createContact({
       ...req.body,
-      userId: req.user._id, // Burada ekledik
+      userId: req.user._id,
     });
 
     res.status(201).json({
@@ -80,11 +94,24 @@ async function createContact(req, res, next) {
   }
 }
 
-
 // PATCH /contacts/:contactId
 async function updateContact(req, res, next) {
   try {
     const { contactId } = req.params;
+    const { file } = req;
+
+    // Fotoğraf yükleme varsa Cloudinary'e gönder
+    if (file) {
+      const result = await cloudinary.uploader.upload_stream(
+        { resource_type: 'image', folder: 'contacts' },
+        (error, result) => {
+          if (error) throw error;
+          req.body.photo = result.secure_url;
+        }
+      );
+      const stream = result;
+      stream.end(file.buffer);
+    }
 
     const contact = await contactsService.updateContact(contactId, req.body);
 
@@ -125,3 +152,4 @@ export default {
   updateContact,
   deleteContact
 };
+  

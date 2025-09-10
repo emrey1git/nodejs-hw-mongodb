@@ -1,26 +1,21 @@
 import User from '../db/models/User.js';
-import {
-  registerUser,
-  loginUser,
-  logoutUser,
-  refreshSession,
-} from '../services/authServices.js';
+import { registerUser, loginUser, logoutUser, refreshSession } from '../services/authServices.js';
 import nodemailer from 'nodemailer';
+import jwt from 'jsonwebtoken';
+import createHttpError from 'http-errors';
+
+// Kullanıcı kaydı
 export const register = async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
     const newUser = await registerUser({ name, email, password });
-
-    res.status(201).json({
-      status: 'success',
-      message: 'Successfully registered a user!',
-      data: newUser,
-    });
+    res.status(201).json({ status: 'success', message: 'Successfully registered a user!', data: newUser });
   } catch (error) {
     next(error);
   }
 };
 
+// Login
 export const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
@@ -29,26 +24,20 @@ export const login = async (req, res, next) => {
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 gün
+      maxAge: 30 * 24 * 60 * 60 * 1000,
     });
 
-    res.status(200).json({
-      status: 'success',
-      message: 'Successfully logged in an user!',
-      data: { accessToken },
-    });
+    res.status(200).json({ status: 'success', message: 'Successfully logged in an user!', data: { accessToken } });
   } catch (error) {
     next(error);
   }
 };
 
+// Refresh token
 export const refresh = async (req, res, next) => {
   try {
     const { refreshToken } = req.cookies;
-
-    const { accessToken, refreshToken: newRefreshToken } = await refreshSession(
-      refreshToken
-    );
+    const { accessToken, refreshToken: newRefreshToken } = await refreshSession(refreshToken);
 
     res.cookie('refreshToken', newRefreshToken, {
       httpOnly: true,
@@ -56,71 +45,74 @@ export const refresh = async (req, res, next) => {
       maxAge: 30 * 24 * 60 * 60 * 1000,
     });
 
-    res.status(200).json({
-      status: 'success',
-      message: 'Successfully refreshed a session!',
-      data: { accessToken },
-    });
+    res.status(200).json({ status: 'success', message: 'Successfully refreshed a session!', data: { accessToken } });
   } catch (err) {
     next(err);
   }
 };
 
+// Logout
 export const logout = async (req, res, next) => {
   try {
     const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
     if (!refreshToken) throw new Error('No refresh token provided');
 
     await logoutUser(refreshToken);
-
-    res.clearCookie('refreshToken', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-    });
+    res.clearCookie('refreshToken', { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
     res.status(204).send();
   } catch (error) {
     next(error);
   }
 };
 
+// Şifre sıfırlama maili gönderme (Adım 3)
 export const sendResetEmail = async (req, res, next) => {
   const { email } = req.body;
-  if (!email) res.status(400).json({ message: 'Email is required' });
+  if (!email) return next(createHttpError(400, 'Email is required'));
+
   try {
     const user = await User.findOne({ email });
-    if (!user) res.status(404).json({ message: 'User not found' });
+    if (!user) return next(createHttpError(404, 'User not found!'));
 
-    //reset token
-    const resetToken = user.createPasswordResetToken();
-
-    //kullanıcıyı kaydet
-    await user.save({ validateBeforeSave: false });
-
-    //şifre sıfırlama
-    const resetUrl = `${req.protocol}://${req.get(
-      'host'
-    )}/auth/reset-password/${resetToken}`;
-
-    //nodemailer
+    const token = jwt.sign({ email: user.email }, process.env.JWT_SECRET, { expiresIn: '5m' });
+    const resetUrl = `${process.env.APP_DOMAIN}/reset-password?token=${token}`;
 
     const transporter = nodemailer.createTransport({
-      host: 'smtp-relay.brevo.com',
-      port: 587,
-      auth: {
-        user: process.env.BREVO_USER,
-        pass: process.env.BREVO_PASS,
-      },
+      host: process.env.SMTP_HOST,
+      port: process.env.SMTP_PORT,
+      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
     });
 
     await transporter.sendMail({
-      from: '"Your App" <no-reply@yourapp.com>',
+      from: process.env.SMTP_FROM,
       to: user.email,
       subject: 'Password Reset',
       html: `<p>Şifre sıfırlama linkiniz: <a href="${resetUrl}">${resetUrl}</a></p>`,
     });
-    res.status(200).json({ message: 'Reset email sent' });
+
+    res.status(200).json({ status: 200, message: 'Reset password email has been successfully sent.', data: {} });
   } catch (error) {
     console.error(error);
-    next(error);
+    next(createHttpError(500, 'Failed to send the email, please try again later.'));
+  }
+};
+
+// Şifre resetleme (Adım 4)
+export const resetPassword = async (req, res, next) => {
+  const { token, password } = req.body;
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findOne({ email: decoded.email });
+    if (!user) return next(createHttpError(404, 'User not found!'));
+
+    user.password = password;
+    await user.save();
+
+    // Burada refresh tokenları temizlemek için session tabanlı bir model varsa kullanılabilir
+
+    res.status(200).json({ status: 200, message: 'Password has been successfully reset.', data: {} });
+  } catch (err) {
+    next(createHttpError(401, 'Token is expired or invalid.',err));
   }
 };

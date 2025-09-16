@@ -17,7 +17,6 @@ const resetPwdSchema = Joi.object({
   token: Joi.string().required(),
   password: Joi.string().min(6).required(),
 });
-
 router.post('/register', register);
 router.post('/login', login);
 router.post('/refresh', refresh);

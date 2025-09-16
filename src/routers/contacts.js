@@ -8,11 +8,16 @@ import { authenticate } from '../middlewares/authenticate.js';
 import upload from '../middlewares/upload.js';
 
 const router = express.Router();
-router.use(authenticate);
+// router.use(authenticate); 
 
 router.get('/', ctrlWrapper(contactsController.getContacts));
-
 router.get('/:contactId', isValidId, ctrlWrapper(contactsController.getContactById));
+
+router.post('/', upload.single('photo'), validateBody(createContactSchema), ctrlWrapper(contactsController.createContact));
+router.patch('/:contactId', isValidId, upload.single('photo'), validateBody(updateContactSchema), ctrlWrapper(contactsController.updateContact));
+
+router.delete('/:contactId', isValidId, ctrlWrapper(contactsController.deleteContact));
+
 
 // POST /contacts
 router.post(

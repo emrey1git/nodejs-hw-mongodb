@@ -1,0 +1,30 @@
+get:
+  tags:
+    - Contacts
+  summary: Belirli bir contact bilgisini getirir
+  operationId: getContactById
+  description: ID kullanarak tek bir contact bilgisini döner
+  security:
+    - bearerAuth: []
+  parameters:
+    - name: contactId
+      in: path
+      required: true
+      schema:
+        type: string
+  responses:
+    '200':
+      description: Başarılı yanıt
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              email:
+                type: string
+    '404':
+      description: Contact bulunamadı

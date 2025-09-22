@@ -1,0 +1,19 @@
+delete:
+  tags:
+    - Contacts
+  summary: Belirli bir contactı siler
+  operationId: deleteContact
+  description: ID kullanarak contactı siler
+  security:
+    - bearerAuth: []
+  parameters:
+    - name: contactId
+      in: path
+      required: true
+      schema:
+        type: string
+  responses:
+    '200':
+      description: Başarılı yanıt
+    '404':
+      description: Contact bulunamadı

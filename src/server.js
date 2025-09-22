@@ -7,7 +7,11 @@ import notFoundHandler from './middlewares/notFoundHandler.js';
 import errorHandler from './middlewares/errorHandler.js';
 import cookieParser from 'cookie-parser';
 
-import authRouter from './routers/authRouter.js'
+import authRouter from './routers/authRouter.js';
+
+// Swagger UI için eklemeler
+import swaggerUi from 'swagger-ui-express';
+import YAML from 'yamljs';
 
 export function setupServer() {
   const app = express();
@@ -21,8 +25,12 @@ export function setupServer() {
     res.send('Express sunucusu çalışıyor!');
   });
 
+  // Swagger/OpenAPI dosyasını yükle
+  const swaggerDocument = YAML.load('./docs/openapi.yaml');
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
   app.use('/contacts', contactsRouter);
-  app.use('/auth', authRouter)
+  app.use('/auth', authRouter);
 
   // 404 için sadece notFoundHandler kullanılır
   app.use(notFoundHandler);

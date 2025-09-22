@@ -1,0 +1,25 @@
+patch:
+  tags:
+    - Contacts
+  summary: Belirli bir contact bilgisini günceller
+  operationId: updateContact
+  description: ID kullanarak contact bilgilerini günceller
+  security:
+    - bearerAuth: []
+  parameters:
+    - name: contactId
+      in: path
+      required: true
+      schema:
+        type: string
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../../components/schemas.yaml#/ContactUpdate'
+  responses:
+    '200':
+      description: Başarılı yanıt
+    '404':
+      description: Contact bulunamadı

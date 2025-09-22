@@ -1,0 +1,17 @@
+post:
+  tags:
+    - Contacts
+  summary: Yeni contact oluşturur
+  operationId: createContact
+  description: Yeni bir contact ekler
+  security:
+    - bearerAuth: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../../components/schemas.yaml#/ContactCreate'
+  responses:
+    '201':
+      description: Başarılı oluşturuldu
